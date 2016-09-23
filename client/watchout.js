@@ -17,6 +17,10 @@
 var randomNumber = function randomNumber(startIndex, endIndex) {
   return Math.floor( Math.random() * (endIndex - startIndex + 1) ) + startIndex;
 };
+//start clock
+var startClock = false;
+
+
 
 //create an svg append to board
 var boardHeight = 500;
@@ -64,6 +68,27 @@ var update = function update(asteroidData) {
   selection.exit().remove();
 };
 
+var updateMouse = function updateMouse(mouseData) {
+  var selection = d3.select('.board').select('svg').selectAll('.mouse').data(mouseData);
+
+  selection
+  .attr('cx', function(d) { return d.mouseX; })
+  .attr('cy', function(d) { return d.mouseY; })
+  .attr('r', function(d) { return d.r; })
+  .attr('class', function(d) { return d.class; })
+  .attr('fill', function(d) { return d.fill; });
+
+  selection.enter().append('circle')
+  .attr('cx', function(d) { return d.mouseX; })
+  .attr('cy', function(d) { return d.mouseY; })
+  .attr('r', function(d) { return d.r; })
+  .attr('class', function(d) { return d.class; })
+  .attr('fill', function(d) { return d.fill; });
+
+  selection.exit().remove();
+
+};
+
 
 var moveAsteroids = function(asteroidData) {
   asteroidData = asteroidData.map(function(asteroid) {
@@ -72,7 +97,6 @@ var moveAsteroids = function(asteroidData) {
 
     return asteroid;
   });
-  console.log('HEY', asteroidData.length)
 
   return asteroidData;
 };
@@ -89,11 +113,23 @@ var clock = function() {
   //setup setTimeout to run again
   clockTimeout = setTimeout( clock, tick);
 };
-clock();
+// clock();
 
 d3.select('.board').select('svg').on('mousemove', function(d, i) {
+  if (startClock === false) {
+    clock();
+    startClock = true;
+  }
   mouse = d3.mouse(this);
   mouseX = mouse[0];
   mouseY = mouse[1];
-  console.log('mouseX =' + mouseX + ' and mouseY =' + mouseY + '.');
+  updateMouse([{mouseX: mouseX, mouseY: mouseY, class: 'mouse', fill: 'red', r: 10}]);
+});
+
+d3.select('.board').select('svg').on('mouseover', function(d, i) {
+  d3.select(this).style('cursor', 'none');
+});
+
+d3.select('.board').select('svg').on('mouseout', function(d, i) {
+  d3.select(this).style('cursor', 'default');
 });
