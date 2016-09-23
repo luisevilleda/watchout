@@ -42,11 +42,12 @@ for (var i = 0; i < asteroidCount; i++) {
 
 
 //make an update function
+var animationDuration = 1000;
 var update = function update(asteroidData) {
   var selection = d3.select('.board').select('svg').selectAll('.asteroid').data(asteroidData);
   
 
-  selection.append('circle')
+  selection.transition().duration(animationDuration)
   .attr('cx', function(d) { return d.cx; } )
   .attr('cy', function(d) { return d.cy; } )
   .attr('r', function(d) { return d.r; } )
@@ -65,10 +66,19 @@ var update = function update(asteroidData) {
 
 
 var moveAsteroids = function(asteroidData) {
+  asteroidData = asteroidData.map(function(asteroid) {
+    asteroid.cx = randomNumber(0, boardWidth);
+    asteroid.cy = randomNumber(0, boardHeight);
+
+    return asteroid;
+  });
+  console.log('HEY', asteroidData.length)
+
   return asteroidData;
 };
 
-var tickclock;
+var clockTimeout;
+var tick = 1000;
 var clock = function() {
   //do some work with asteroidData
   asteroidData = moveAsteroids(asteroidData);
@@ -77,8 +87,13 @@ var clock = function() {
   update(asteroidData);
 
   //setup setTimeout to run again
-  tickclock = setTimeout( function() { 
-    clock;
-  }, 100);
+  clockTimeout = setTimeout( clock, tick);
 };
 clock();
+
+d3.select('.board').select('svg').on('mousemove', function(d, i) {
+  mouse = d3.mouse(this);
+  mouseX = mouse[0];
+  mouseY = mouse[1];
+  console.log('mouseX =' + mouseX + ' and mouseY =' + mouseY + '.');
+});
