@@ -17,26 +17,34 @@
 var randomNumber = function randomNumber(startIndex, endIndex) {
   return Math.floor( Math.random() * (endIndex - startIndex + 1) ) + startIndex;
 };
+
+
+
+//Control Panel
+var animationDuration = 5000;
+var asteroidTick = 5000;
+  //Mouse radius
+var mouseR = 10;
+
+
 //start clock
 var startClock = false;
 
-//Mouse radius
-var mouseR = 10;
 
 
 
 //create an svg append to board
-var boardHeight = 500;
-var boardWidth = 700;
+var boardHeight = window.innerHeight;
+var boardWidth = window.innerWidth;
 var boardBackground = 'lightblue';
 d3.select('.board').append('svg').style({'height': boardHeight + 'px', 'width': boardWidth + 'px', 'background': boardBackground });
 
 //create the asteroids
 //decide how many we want
-var baseAsteroidCount = 5;
+var baseAsteroidCount = 50;
 var asteroidCount = baseAsteroidCount;
 var asteroidData = [];
-var asteroidR = 10;
+var asteroidR = 20;
 //create an asteroids array data set
 var createAsteroidData = function createAsteroidData(n) {
   var newAsteroids = [];
@@ -56,7 +64,6 @@ asteroidData = createAsteroidData(asteroidCount);
 
 //make an update function
 var asteroidUpdate = true;
-var animationDuration = 1000;
 var update = function update(asteroidData) {
   if (asteroidUpdate) {
     var selection = d3.select('.board').select('svg').selectAll('.asteroid').data(asteroidData);
@@ -83,6 +90,7 @@ var update = function update(asteroidData) {
 var updateMouse = function updateMouse(mouseData) {
   var selection = d3.select('.board').select('svg').selectAll('.mouse').data(mouseData);
 
+  //updates the pointer
   selection
   .attr('cx', function(d) { return d.mouseX; })
   .attr('cy', function(d) { return d.mouseY; })
@@ -114,7 +122,6 @@ var moveAsteroids = function(asteroidData) {
 };
 
 var asteroidTimeout;
-var asteroidTick = 1000;
 var asteroidClock = function() {
 
   //do some work with asteroidData
@@ -122,7 +129,6 @@ var asteroidClock = function() {
 
   //update Asteroids
   update(asteroidData);
-
 
   //setup setTimeout to run again
   asteroidTimeout = setTimeout( asteroidClock, asteroidTick);
