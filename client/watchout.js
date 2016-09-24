@@ -20,6 +20,9 @@ var randomNumber = function randomNumber(startIndex, endIndex) {
 //start clock
 var startClock = false;
 
+//Mouse radius
+var mouseR = 10;
+
 
 
 //create an svg append to board
@@ -30,14 +33,14 @@ d3.select('.board').append('svg').style({'height': boardHeight + 'px', 'width': 
 
 //create the asteroids
 //decide how many we want
-var asteroidCount = 100;
+var asteroidCount = 5;
 var asteroidData = [];
+var asteroidR = 10;
 //create an asteroids array data set
 for (var i = 0; i < asteroidCount; i++) {
   var x = randomNumber(0, boardWidth);
   var y = randomNumber(0, boardHeight);
-  var circleSize = 10;
-  var newAsteroid = {cx: x, cy: y, r: circleSize, class: 'asteroid', fill: 'black'};
+  var newAsteroid = {cx: x, cy: y, r: asteroidR, class: 'asteroid', fill: 'black'};
   asteroidData.push(newAsteroid);
 }
     //assign x and y to each
@@ -46,26 +49,29 @@ for (var i = 0; i < asteroidCount; i++) {
 
 
 //make an update function
+var asteroidUpdate = true;
 var animationDuration = 1000;
 var update = function update(asteroidData) {
-  var selection = d3.select('.board').select('svg').selectAll('.asteroid').data(asteroidData);
-  
+  if (asteroidUpdate) {
+    var selection = d3.select('.board').select('svg').selectAll('.asteroid').data(asteroidData);
+    
 
-  selection.transition().duration(animationDuration)
-  .attr('cx', function(d) { return d.cx; } )
-  .attr('cy', function(d) { return d.cy; } )
-  .attr('r', function(d) { return d.r; } )
-  .attr('class', function(d) { return d.class; } )
-  .attr('fill', function(d) { return d.fill; } );
+    selection.transition().duration(animationDuration)
+    .attr('cx', function(d) { return d.cx; } )
+    .attr('cy', function(d) { return d.cy; } )
+    .attr('r', function(d) { return d.r; } )
+    .attr('class', function(d) { return d.class; } )
+    .attr('fill', function(d) { return d.fill; } );
 
-  selection.enter().append('circle')
-  .attr('cx', function(d) { return d.cx; } )
-  .attr('cy', function(d) { return d.cy; } )
-  .attr('r', function(d) { return d.r; } )
-  .attr('class', function(d) { return d.class; } )
-  .attr('fill', function(d) { return d.fill; } );
+    selection.enter().append('circle')
+    .attr('cx', function(d) { return d.cx; } )
+    .attr('cy', function(d) { return d.cy; } )
+    .attr('r', function(d) { return d.r; } )
+    .attr('class', function(d) { return d.class; } )
+    .attr('fill', function(d) { return d.fill; } );
 
-  selection.exit().remove();
+    selection.exit().remove();
+  }
 };
 
 var updateMouse = function updateMouse(mouseData) {
@@ -101,9 +107,9 @@ var moveAsteroids = function(asteroidData) {
   return asteroidData;
 };
 
-var clockTimeout;
-var tick = 1000;
-var clock = function() {
+var asteroidTimeout;
+var asteroidTick = 1000;
+var asteroidClock = function() {
   //do some work with asteroidData
   asteroidData = moveAsteroids(asteroidData);
 
@@ -111,19 +117,57 @@ var clock = function() {
   update(asteroidData);
 
   //setup setTimeout to run again
-  clockTimeout = setTimeout( clock, tick);
+  asteroidTimeout = setTimeout( asteroidClock, asteroidTick);
 };
-// clock();
 
+var collisionTimeout;
+var collisionTick = 20;
+var collisionClock = function() {
+  var asteroidsArr = d3.select('.board').select('svg').selectAll('.asteroid');
+  collisionTick = 20;
+  asteroidUpdate = true;
+  for (var i = 0; i < asteroidsArr[0].length; i++) {
+    var thisAsteroid = d3.select(asteroidsArr[0][i]);
+    var cx = thisAsteroid.attr('cx');
+    var cy = thisAsteroid.attr('cy');
+    var asteroidRadius = +thisAsteroid.attr('r');
+    var currentScore = d3.select('.currentScoreSpan');
+    // console.log(Math.sqrt( Math.pow(mouseX - cx, 2) + Math.pow( mouseY - cy, 2)), (mouseR + asteroidRadius));
+    if ( Math.sqrt( Math.pow( mouseX - cx, 2) + Math.pow( mouseY - cy, 2)) < (mouseR + asteroidRadius) ) {
+      // console.log('collision');
+      collisionTick = 3000;
+      asteroidUpdate = false;
+      var highScore = d3.select('.highScoreSpan');
+      var collisionsSpan = d3.select('.collisionsSpan');
+
+      if ( +highScore.text() < +currentScore.text() ) {
+        highScore.text(currentScore.text());
+      }
+      currentScore.text(0);
+      collisionsSpan.text( Number(collisionsSpan.text()) + 2 );
+    }
+  }
+  currentScore.text(Number(currentScore.text()) + 1);
+
+  collisionTimeout = setTimeout(collisionClock, collisionTick);
+};
+
+
+
+//EVENT HANDLERS
+var mouseX;
+var mouseY;
 d3.select('.board').select('svg').on('mousemove', function(d, i) {
   if (startClock === false) {
-    clock();
+    asteroidClock();
+    collisionClock();
     startClock = true;
   }
+  // console.log('THIS:',this);
   mouse = d3.mouse(this);
   mouseX = mouse[0];
   mouseY = mouse[1];
-  updateMouse([{mouseX: mouseX, mouseY: mouseY, class: 'mouse', fill: 'red', r: 10}]);
+  updateMouse([{mouseX: mouseX, mouseY: mouseY, class: 'mouse', fill: 'red', r: mouseR}]);
 });
 
 d3.select('.board').select('svg').on('mouseover', function(d, i) {
