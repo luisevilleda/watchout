@@ -33,16 +33,22 @@ d3.select('.board').append('svg').style({'height': boardHeight + 'px', 'width': 
 
 //create the asteroids
 //decide how many we want
-var asteroidCount = 5;
+var baseAsteroidCount = 5;
+var asteroidCount = baseAsteroidCount;
 var asteroidData = [];
 var asteroidR = 10;
 //create an asteroids array data set
-for (var i = 0; i < asteroidCount; i++) {
-  var x = randomNumber(0, boardWidth);
-  var y = randomNumber(0, boardHeight);
-  var newAsteroid = {cx: x, cy: y, r: asteroidR, class: 'asteroid', fill: 'black'};
-  asteroidData.push(newAsteroid);
-}
+var createAsteroidData = function createAsteroidData(n) {
+  var newAsteroids = [];
+  for (var i = 0; i < n; i++) {
+    var x = randomNumber(0, boardWidth);
+    var y = randomNumber(0, boardHeight);
+    var newAsteroid = {cx: x, cy: y, r: asteroidR, class: 'asteroid', fill: 'black'};
+    newAsteroids.push(newAsteroid);
+  }
+  return newAsteroids;
+};
+asteroidData = createAsteroidData(asteroidCount);
     //assign x and y to each
       //based on svg size
 
@@ -110,11 +116,13 @@ var moveAsteroids = function(asteroidData) {
 var asteroidTimeout;
 var asteroidTick = 1000;
 var asteroidClock = function() {
+
   //do some work with asteroidData
   asteroidData = moveAsteroids(asteroidData);
 
   //update Asteroids
   update(asteroidData);
+
 
   //setup setTimeout to run again
   asteroidTimeout = setTimeout( asteroidClock, asteroidTick);
@@ -124,6 +132,7 @@ var collisionTimeout;
 var collisionTick = 20;
 var collisionClock = function() {
   var asteroidsArr = d3.select('.board').select('svg').selectAll('.asteroid');
+  var currentScore = d3.select('.currentScoreSpan');
   collisionTick = 20;
   asteroidUpdate = true;
   for (var i = 0; i < asteroidsArr[0].length; i++) {
@@ -131,23 +140,32 @@ var collisionClock = function() {
     var cx = thisAsteroid.attr('cx');
     var cy = thisAsteroid.attr('cy');
     var asteroidRadius = +thisAsteroid.attr('r');
-    var currentScore = d3.select('.currentScoreSpan');
     // console.log(Math.sqrt( Math.pow(mouseX - cx, 2) + Math.pow( mouseY - cy, 2)), (mouseR + asteroidRadius));
     if ( Math.sqrt( Math.pow( mouseX - cx, 2) + Math.pow( mouseY - cy, 2)) < (mouseR + asteroidRadius) ) {
       // console.log('collision');
       collisionTick = 3000;
       asteroidUpdate = false;
+      //this resets the asteroid count and asteriods back to the base number
+      asteroidCount = baseAsteroidCount;
+      asteroidData = createAsteroidData(asteroidCount);
       var highScore = d3.select('.highScoreSpan');
       var collisionsSpan = d3.select('.collisionsSpan');
 
+      //update the highscore
       if ( +highScore.text() < +currentScore.text() ) {
         highScore.text(currentScore.text());
       }
-      currentScore.text(0);
+      //resets your score
+      currentScore.text('-1');
       collisionsSpan.text( Number(collisionsSpan.text()) + 2 );
     }
   }
   currentScore.text(Number(currentScore.text()) + 1);
+  if (Number(currentScore.text()) % 200 === 0) {
+    asteroidCount = asteroidCount + 5;
+    var newAsteroids = createAsteroidData(asteroidCount);
+    asteroidData.concat(newAsteroids);
+  }
 
   collisionTimeout = setTimeout(collisionClock, collisionTick);
 };
